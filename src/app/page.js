@@ -4,6 +4,39 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import EmojiPicker from 'emoji-picker-react';
 
+// Specialized component to handle ad scripts execution
+const AdSlot = ({ html, className }) => {
+  const containerRef = (node) => {
+    if (node && html) {
+      // Clear existing content
+      node.innerHTML = "";
+      
+      // Create a temporary div to parse the HTML string
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = html;
+      
+      // Move all non-script nodes and execute script nodes
+      Array.from(tempDiv.childNodes).forEach((child) => {
+        if (child.tagName === "SCRIPT") {
+          const script = document.createElement("script");
+          if (child.src) {
+            script.src = child.src;
+          } else {
+            script.textContent = child.textContent;
+          }
+          // Clone attributes
+          Array.from(child.attributes).forEach(attr => script.setAttribute(attr.name, attr.value));
+          node.appendChild(script);
+        } else {
+          node.appendChild(child.cloneNode(true));
+        }
+      });
+    }
+  };
+
+  return <div ref={containerRef} className={className} />;
+};
+
 // Default mock channels
 const DEFAULT_CHANNELS = [
   { id: '1', name: 'Kerala News', youtube_id: 's0LLVQeMmtU', state: 'Kerala' },
@@ -188,7 +221,21 @@ export default function Home() {
           Live<span>Election</span> News 24/7
         </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div className="header-ad-slot" dangerouslySetInnerHTML={{ __html: settings?.header_ad || '[ Header Ad Slot - 320x50 ]' }} />
+            <AdSlot 
+              className="header-ad-slot" 
+              html={settings?.header_ad || `
+                <script>
+                  atOptions = {
+                    'key' : '97c438075f81f5cb57cdb3bb862165d0',
+                    'format' : 'iframe',
+                    'height' : 50,
+                    'width' : 320,
+                    'params' : {}
+                  };
+                </script>
+                <script src="https://www.highperformanceformat.com/97c438075f81f5cb57cdb3bb862165d0/invoke.js"></script>
+              `} 
+            />
             <button 
               onClick={toggleFullScreen}
               style={{ 
@@ -334,7 +381,21 @@ export default function Home() {
             </div>
           </div>
           
-          <div className="sidebar-ad-slot" dangerouslySetInnerHTML={{ __html: settings?.sidebar_ad || '[ Sidebar Ad Slot - 300x250 ]' }} />
+          <AdSlot 
+            className="sidebar-ad-slot" 
+            html={settings?.sidebar_ad || `
+              <script>
+                atOptions = {
+                  'key' : '90d958d4b70dde1eadc08c143547c656',
+                  'format' : 'iframe',
+                  'height' : 250,
+                  'width' : 300,
+                  'params' : {}
+                };
+              </script>
+              <script src="https://www.highperformanceformat.com/90d958d4b70dde1eadc08c143547c656/invoke.js"></script>
+            `} 
+          />
 
 
           <div className="chat-container">
