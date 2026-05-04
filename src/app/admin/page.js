@@ -406,148 +406,169 @@ export default function AdminDashboard() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>🌍 Live World Visitor Map</h3>
                 <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#888' }}>{visitorLogs.length} total hits tracked</span>
+                  <span style={{ fontSize: '0.75rem', color: '#888' }}>{visitorLogs.filter(l => l.country).length} geo-tagged hits</span>
                   <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 'bold' }}>📡 LIVE</div>
                 </div>
               </div>
 
-              {/* Map Container */}
-              <div style={{ position: 'relative', width: '100%', paddingBottom: '50%', background: '#050a12', borderRadius: '10px', overflow: 'hidden', border: '1px solid #1a1a2e' }}>
-                
-                {/* World map image as base layer */}
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1280px-World_map_-_low_resolution.svg.png"
-                  alt="World Map"
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', opacity: 0.18, filter: 'grayscale(1) brightness(0.6)' }}
-                />
+              {/* Fixed-height SVG map container */}
+              <div style={{ position: 'relative', width: '100%', height: '420px', background: '#050a12', borderRadius: '10px', overflow: 'hidden', border: '1px solid #1a1a2e' }}>
+                {/* Full SVG layer: world map + grid + dots all in one */}
+                <svg viewBox="0 0 1000 500" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                  {/* Ocean background */}
+                  <rect width="1000" height="500" fill="#050a12" />
 
-                {/* Grid overlay */}
-                <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.07 }}>
-                  <defs>
-                    <pattern id="wgrid" width="5%" height="10%" patternUnits="userSpaceOnUse">
-                      <path d="M 80 0 L 0 0 0 40" fill="none" stroke="#3b82f6" strokeWidth="0.4"/>
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#wgrid)" />
-                  {/* Equator line */}
-                  <line x1="0" y1="50%" x2="100%" y2="50%" stroke="#ffffff" strokeWidth="0.4" strokeDasharray="4,8" opacity="0.3"/>
+                  {/* Latitude grid lines */}
+                  {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490].map(y => (
+                    <line key={`h${y}`} x1="0" y1={y} x2="1000" y2={y} stroke="#1a2a3a" strokeWidth="0.5" />
+                  ))}
+                  {[50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950].map(x => (
+                    <line key={`v${x}`} x1={x} y1="0" x2={x} y2="500" stroke="#1a2a3a" strokeWidth="0.5" />
+                  ))}
+
+                  {/* Equator */}
+                  <line x1="0" y1="250" x2="1000" y2="250" stroke="#ffffff" strokeWidth="0.6" strokeDasharray="8,12" opacity="0.2" />
                   {/* Prime meridian */}
-                  <line x1="50%" y1="0" x2="50%" y2="100%" stroke="#ffffff" strokeWidth="0.4" strokeDasharray="4,8" opacity="0.2"/>
+                  <line x1="500" y1="0" x2="500" y2="500" stroke="#ffffff" strokeWidth="0.6" strokeDasharray="8,12" opacity="0.15" />
+
+                  {/* Simplified continent shapes */}
+                  {/* North America */}
+                  <path d="M 70 80 L 110 60 L 180 65 L 220 100 L 250 150 L 230 200 L 200 240 L 160 260 L 120 230 L 90 180 L 70 130 Z" fill="#0d2137" stroke="#1e3a4f" strokeWidth="1" opacity="0.8"/>
+                  {/* South America */}
+                  <path d="M 180 260 L 220 255 L 250 290 L 260 350 L 240 400 L 200 440 L 170 420 L 155 370 L 160 310 Z" fill="#0d2137" stroke="#1e3a4f" strokeWidth="1" opacity="0.8"/>
+                  {/* Europe */}
+                  <path d="M 440 80 L 490 70 L 530 85 L 520 130 L 490 140 L 460 130 L 440 110 Z" fill="#0d2137" stroke="#1e3a4f" strokeWidth="1" opacity="0.8"/>
+                  {/* Africa */}
+                  <path d="M 450 170 L 510 160 L 540 200 L 550 280 L 530 370 L 490 410 L 460 400 L 430 340 L 420 260 L 430 200 Z" fill="#0d2137" stroke="#1e3a4f" strokeWidth="1" opacity="0.8"/>
+                  {/* Asia */}
+                  <path d="M 530 60 L 700 50 L 820 80 L 850 130 L 820 170 L 750 190 L 680 200 L 620 180 L 570 160 L 540 130 L 530 90 Z" fill="#0d2137" stroke="#1e3a4f" strokeWidth="1" opacity="0.8"/>
+                  {/* India subcontinent */}
+                  <path d="M 640 190 L 680 185 L 700 240 L 680 290 L 650 285 L 630 240 Z" fill="#102030" stroke="#1e3a4f" strokeWidth="1" opacity="0.9"/>
+                  {/* Southeast Asia */}
+                  <path d="M 750 200 L 820 210 L 830 250 L 790 260 L 760 240 Z" fill="#0d2137" stroke="#1e3a4f" strokeWidth="1" opacity="0.8"/>
+                  {/* Australia */}
+                  <path d="M 780 320 L 870 305 L 920 340 L 900 400 L 830 420 L 770 390 L 760 350 Z" fill="#0d2137" stroke="#1e3a4f" strokeWidth="1" opacity="0.8"/>
+
+                  {/* Visitor dots — real data from DB */}
+                  {(() => {
+                    // Country → [svgX, svgY] on 1000x500 canvas (equirectangular approximation)
+                    const POS = {
+                      'India':              [640, 235],
+                      'United States':      [175, 185],
+                      'United Kingdom':     [463, 105],
+                      'Canada':             [155, 130],
+                      'Australia':          [840, 370],
+                      'Germany':            [490, 110],
+                      'France':             [468, 118],
+                      'Italy':              [495, 130],
+                      'Spain':              [450, 128],
+                      'Netherlands':        [480, 105],
+                      'UAE':                [605, 205],
+                      'Saudi Arabia':       [580, 205],
+                      'Qatar':              [600, 208],
+                      'Kuwait':             [590, 198],
+                      'Bahrain':            [598, 205],
+                      'Oman':               [615, 215],
+                      'Singapore':          [755, 255],
+                      'Malaysia':           [750, 250],
+                      'Sri Lanka':          [665, 262],
+                      'Pakistan':           [620, 188],
+                      'Bangladesh':         [688, 210],
+                      'Nepal':              [658, 195],
+                      'Japan':              [830, 160],
+                      'China':              [730, 175],
+                      'South Korea':        [810, 155],
+                      'Indonesia':          [780, 268],
+                      'Philippines':        [800, 225],
+                      'Brazil':             [225, 330],
+                      'Mexico':             [135, 215],
+                      'Argentina':          [210, 420],
+                      'South Africa':       [500, 390],
+                      'Nigeria':            [470, 250],
+                      'Kenya':              [540, 270],
+                      'Egypt':              [530, 185],
+                      'Sweden':             [495, 82],
+                      'Norway':             [480, 78],
+                      'Denmark':            [487, 95],
+                      'Switzerland':        [482, 122],
+                      'Poland':             [505, 105],
+                      'Russia':             [630, 100],
+                      'Turkey':             [545, 152],
+                      'Israel':             [530, 178],
+                      'Jordan':             [535, 182],
+                      'New Zealand':        [900, 430],
+                    };
+
+                    // Aggregate real data
+                    const counts = visitorLogs.reduce((acc, log) => {
+                      if (log.country) acc[log.country] = (acc[log.country] || 0) + 1;
+                      return acc;
+                    }, {});
+
+                    const hasReal = Object.keys(counts).length > 0;
+                    const demo = { 'India': 120, 'UAE': 45, 'United States': 30, 'United Kingdom': 22, 'Singapore': 18, 'Saudi Arabia': 15, 'Kuwait': 12, 'Qatar': 10, 'Germany': 8, 'Australia': 7, 'Sri Lanka': 6, 'Malaysia': 5 };
+                    const src = hasReal ? counts : demo;
+                    const maxV = Math.max(...Object.values(src));
+
+                    return Object.entries(src).map(([country, count]) => {
+                      const pos = POS[country];
+                      if (!pos) return null;
+                      const [cx, cy] = pos;
+                      const r = Math.max(8, Math.min(28, (count / maxV) * 28));
+                      const isHot = count > maxV * 0.5;
+                      const color = isHot ? '#ef4444' : count > maxV * 0.2 ? '#f59e0b' : '#3b82f6';
+                      return (
+                        <g key={country}>
+                          {isHot && <circle cx={cx} cy={cy} r={r + 10} fill="none" stroke={color} strokeWidth="1.5" opacity="0.35">
+                            <animate attributeName="r" values={`${r+5};${r+18};${r+5}`} dur="2s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+                          </circle>}
+                          <circle cx={cx} cy={cy} r={r} fill={color} opacity="0.85" />
+                          <circle cx={cx - r*0.3} cy={cy - r*0.3} r={r*0.4} fill="white" opacity="0.2" />
+                          <text x={cx} y={cy + 4} textAnchor="middle" fontSize={Math.max(8, r * 0.6)} fontWeight="bold" fill="white">{count}</text>
+                          {r > 14 && <text x={cx} y={cy + r + 10} textAnchor="middle" fontSize="7" fill={color} opacity="0.9">{country.split(' ')[0]}</text>}
+                        </g>
+                      );
+                    }).filter(Boolean);
+                  })()}
+
+                  {/* Labels */}
+                  <text x="10" y="15" fontSize="8" fill="#1e3a4f" fontFamily="monospace">INDIA — LIVE VIEWER MAP</text>
+                  {visitorLogs.filter(l => l.country).length === 0 && (
+                    <text x="820" y="15" fontSize="7" fill="#f59e0b" fontFamily="monospace">DEMO MODE</text>
+                  )}
                 </svg>
 
-                {/* Visitor dots — Mercator projection */}
-                {(() => {
-                  // Country → [lat, lon] centroids
-                  const COORDS = {
-                    'India':              [20.59, 78.96],
-                    'United States':      [37.09, -95.71],
-                    'United Kingdom':     [55.38, -3.44],
-                    'Canada':             [56.13, -106.35],
-                    'Australia':          [-25.27, 133.78],
-                    'Germany':            [51.17, 10.45],
-                    'France':             [46.23, 2.21],
-                    'Italy':              [41.87, 12.57],
-                    'Spain':              [40.46, -3.75],
-                    'Netherlands':        [52.13, 5.29],
-                    'UAE':                [23.42, 53.85],
-                    'Saudi Arabia':       [23.89, 45.08],
-                    'Qatar':              [25.35, 51.18],
-                    'Kuwait':             [29.31, 47.49],
-                    'Bahrain':            [26.00, 50.55],
-                    'Oman':               [21.51, 55.92],
-                    'Singapore':          [1.35, 103.82],
-                    'Malaysia':           [4.21, 101.98],
-                    'Sri Lanka':          [7.87, 80.77],
-                    'Pakistan':           [30.38, 69.35],
-                    'Bangladesh':         [23.68, 90.36],
-                    'Nepal':              [28.39, 84.12],
-                    'Japan':              [36.20, 138.25],
-                    'China':              [35.86, 104.20],
-                    'South Korea':        [35.91, 127.77],
-                    'Indonesia':          [-0.79, 113.92],
-                    'Philippines':        [12.88, 121.77],
-                    'Brazil':             [-14.24, -51.93],
-                    'Mexico':             [23.63, -102.55],
-                    'Argentina':          [-38.42, -63.62],
-                    'South Africa':       [-30.56, 22.94],
-                    'Nigeria':            [9.08, 8.68],
-                    'Kenya':              [-0.02, 37.91],
-                    'Egypt':              [26.82, 30.80],
-                    'Sweden':             [60.13, 18.64],
-                    'Norway':             [60.47, 8.47],
-                    'Denmark':            [56.26, 9.50],
-                    'Switzerland':        [46.82, 8.23],
-                    'Poland':             [51.92, 19.15],
-                    'Russia':             [61.52, 105.32],
-                    'Turkey':             [38.96, 35.24],
-                    'Israel':             [31.05, 34.85],
-                    'Jordan':             [30.59, 36.24],
-                    'New Zealand':        [-40.90, 174.89],
-                  };
-
-                  // Mercator conversion: lat/lon → x%/y%
-                  const toXY = (lat, lon) => {
-                    const x = ((lon + 180) / 360) * 100;
-                    const latRad = lat * Math.PI / 180;
-                    const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
-                    const y = ((1 - mercN / Math.PI) / 2) * 100;
-                    return { x: Math.max(1, Math.min(99, x)), y: Math.max(1, Math.min(95, y)) };
-                  };
-
-                  // Group real visitor data by country
-                  const countryCounts = visitorLogs.reduce((acc, log) => {
-                    const c = log.country;
-                    if (c) acc[c] = (acc[c] || 0) + 1;
-                    return acc;
-                  }, {});
-
-                  // Fallback demo data if no real geo data yet
-                  const hasRealData = Object.keys(countryCounts).length > 0;
-                  const demoData = { 'India': 120, 'UAE': 45, 'United States': 30, 'United Kingdom': 22, 'Singapore': 18, 'Saudi Arabia': 15, 'Kuwait': 12, 'Qatar': 10, 'Germany': 8, 'Australia': 7 };
-                  const source = hasRealData ? countryCounts : demoData;
-                  const maxCount = Math.max(...Object.values(source));
-
-                  return Object.entries(source).map(([country, count]) => {
-                    const coords = COORDS[country];
-                    if (!coords) return null;
-                    const { x, y } = toXY(coords[0], coords[1]);
-                    const size = Math.max(10, Math.min(36, (count / maxCount) * 36));
-                    const isHot = count > maxCount * 0.5;
-                    const color = isHot ? '#ef4444' : count > maxCount * 0.2 ? '#f59e0b' : '#3b82f6';
-
-                    return (
-                      <div key={country} title={`${country}: ${count} visitor${count > 1 ? 's' : ''}`} style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)', zIndex: 10, cursor: 'pointer' }}>
-                        {/* Pulse ring */}
-                        {isHot && (
-                          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: `${size + 12}px`, height: `${size + 12}px`, borderRadius: '50%', border: `2px solid ${color}`, opacity: 0.4, animation: 'pulse 2s infinite' }} />
-                        )}
-                        {/* Dot */}
-                        <div style={{ width: `${size}px`, height: `${size}px`, borderRadius: '50%', background: `radial-gradient(circle at 35% 35%, ${color}ff, ${color}55)`, border: `1.5px solid ${color}`, boxShadow: `0 0 ${isHot ? 12 : 6}px ${color}88`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {size > 20 && <span style={{ fontSize: `${Math.max(7, size * 0.3)}px`, fontWeight: '900', color: '#fff' }}>{count}</span>}
-                        </div>
-                      </div>
-                    );
-                  }).filter(Boolean);
-                })()}
-
                 {/* Legend */}
-                <div style={{ position: 'absolute', bottom: '10px', left: '12px', display: 'flex', gap: '14px', fontSize: '0.7rem' }}>
+                <div style={{ position: 'absolute', bottom: '12px', left: '14px', display: 'flex', gap: '14px', fontSize: '0.7rem', background: 'rgba(5,10,18,0.7)', padding: '6px 12px', borderRadius: '20px' }}>
                   {[['#ef4444','High'],['#f59e0b','Medium'],['#3b82f6','Low']].map(([c, l]) => (
-                    <div key={l} style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#888' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: c, boxShadow: `0 0 6px ${c}` }} />
+                    <div key={l} style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#aaa' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: c }} />
                       {l}
                     </div>
                   ))}
                 </div>
-
-                {/* No real data notice */}
-                {visitorLogs.filter(l => l.country).length === 0 && (
-                  <div style={{ position: 'absolute', top: '10px', right: '12px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', color: '#f59e0b', padding: '4px 10px', borderRadius: '20px', fontSize: '0.7rem' }}>
-                    Demo data — geo tracking active
-                  </div>
-                )}
               </div>
+
+              {/* Country Table below map */}
+              {(() => {
+                const counts = visitorLogs.reduce((acc, log) => { if (log.country) acc[log.country] = (acc[log.country] || 0) + 1; return acc; }, {});
+                const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0,6);
+                if (sorted.length === 0) return null;
+                return (
+                  <div style={{ marginTop: '15px', display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
+                    {sorted.map(([country, count], i) => (
+                      <div key={country} style={{ background: '#0a0a0f', padding: '10px', borderRadius: '8px', border: '1px solid #1a1a2e', textAlign: 'center' }}>
+                        <div style={{ fontSize: '1rem', fontWeight: '900', color: i === 0 ? '#ef4444' : i === 1 ? '#f59e0b' : '#3b82f6' }}>#{i+1}</div>
+                        <div style={{ fontSize: '0.7rem', color: '#fff', fontWeight: 'bold', marginTop: '3px' }}>{country}</div>
+                        <div style={{ fontSize: '0.65rem', color: '#555', marginTop: '2px' }}>{count} visits</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
+
 
 
             {/* Live Viewer Geographic Map */}
