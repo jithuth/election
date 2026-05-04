@@ -64,13 +64,14 @@ CREATE POLICY "Public can view chat" ON chat_messages
 CREATE POLICY "Public can insert chat" ON chat_messages
   FOR INSERT WITH CHECK (true);
 -- Create visitor logs table
-CREATE TABLE visitor_logs (
+CREATE TABLE IF NOT EXISTS visitor_logs (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   page_path TEXT,
   referrer TEXT,
   browser TEXT,
   device TEXT,
   city TEXT,
+  region TEXT,
   country TEXT,
   session_id TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL

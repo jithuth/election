@@ -15,22 +15,39 @@ export default function Analytics() {
         
         const device = /Mobi|Android/i.test(ua) ? "Mobile" : "Desktop";
         
-        // Use a simple session ID to track unique sessions
         let sessionId = localStorage.getItem('analytics_session');
         if (!sessionId) {
           sessionId = 'sess_' + Math.random().toString(36).substr(2, 9);
           localStorage.setItem('analytics_session', sessionId);
         }
 
+        // Fetch geolocation data (free tier, no API key needed)
+        let region = null;
+        let country = null;
+        let city = null;
+        try {
+          const geoRes = await fetch('https://ip-api.com/json/?fields=status,regionName,country,city');
+          const geoData = await geoRes.json();
+          if (geoData.status === 'success') {
+            region = geoData.regionName || null;
+            country = geoData.country || null;
+            city = geoData.city || null;
+          }
+        } catch (geoErr) {
+          // Geo lookup failed — non-fatal, continue without it
+        }
+
         const log = {
           page_path: window.location.pathname,
           referrer: document.referrer || "Direct",
-          browser: browser,
-          device: device,
-          session_id: sessionId
+          browser,
+          device,
+          session_id: sessionId,
+          region,
+          country,
+          city
         };
 
-        // Fire and forget log insertion
         await supabase.from('visitor_logs').insert([log]);
       } catch (e) {
         console.error("Analytics Error:", e);
