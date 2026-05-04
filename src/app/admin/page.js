@@ -56,30 +56,28 @@ function WorldVisitorMap({ visitorLogs }) {
       </div>
 
       {/* Map canvas */}
-      <div style={{ position: 'relative', width: '100%', height: '340px', background: '#050a12', borderRadius: '10px', overflow: 'hidden', border: '1px solid #1a1a2e' }}>
+      <div style={{ position: 'relative', width: '100%', height: '280px', background: '#050a12', borderRadius: '10px', overflow: 'hidden', border: '1px solid #1a1a2e' }}>
         {/* World map image base */}
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1280px-World_map_-_low_resolution.svg.png"
           alt=""
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', objectPosition: 'center', opacity: 0.18, filter: 'grayscale(1) invert(1) brightness(0.25)' }}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', objectPosition: 'center', opacity: 0.12, filter: 'grayscale(1) invert(1) brightness(0.2)' }}
         />
         {/* Grid */}
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(59,130,246,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.05) 1px,transparent 1px)', backgroundSize: '50px 50px' }} />
-        {/* Equator */}
-        <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'rgba(255,255,255,0.1)', borderTop: '1px dashed rgba(255,255,255,0.1)' }} />
-
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(59,130,246,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.03) 1px,transparent 1px)', backgroundSize: '40px 40px' }} />
+        
         {/* Country dots */}
         {Object.entries(src).map(([country, count]) => {
           const coords = COUNTRY_COORDS[country];
           if (!coords) return null;
           const { left, top } = toMapXY(coords[0], coords[1]);
-          const size = Math.max(12, Math.min(40, (count / maxV) * 40));
+          const size = Math.max(10, Math.min(30, (count / maxV) * 30));
           const isHot = count > maxV * 0.5;
           const color = isHot ? '#ef4444' : count > maxV * 0.2 ? '#f59e0b' : '#3b82f6';
           return (
             <div
               key={country}
-              title={country + ': ' + count + ' visitors'}
+              title={country + ': ' + count}
               style={{
                 position: 'absolute',
                 left: left + '%',
@@ -88,46 +86,31 @@ function WorldVisitorMap({ visitorLogs }) {
                 width: size + 'px',
                 height: size + 'px',
                 borderRadius: '50%',
-                background: 'radial-gradient(circle at 35% 35%,' + color + 'dd,' + color + '55)',
-                border: '2px solid ' + color,
-                boxShadow: '0 0 ' + (isHot ? 14 : 7) + 'px ' + color + '88',
+                background: color,
+                border: '1px solid #fff',
+                boxShadow: '0 0 10px ' + color,
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: 'pointer',
                 zIndex: isHot ? 10 : 5,
               }}
             >
-              <span style={{ fontSize: Math.max(8, size * 0.28) + 'px', fontWeight: '900', color: '#fff', lineHeight: 1 }}>{count}</span>
-              {size > 22 && <span style={{ fontSize: '6px', color: color, fontWeight: 'bold', lineHeight: 1 }}>{country.split(' ')[0]}</span>}
+              <span style={{ fontSize: '8px', fontWeight: 'bold', color: '#fff' }}>{count}</span>
             </div>
           );
         })}
-
-        {/* Legend */}
-        <div style={{ position: 'absolute', bottom: '10px', left: '12px', display: 'flex', gap: '12px', fontSize: '0.7rem', background: 'rgba(5,10,18,0.8)', padding: '5px 12px', borderRadius: '20px' }}>
-          {[['#ef4444','High'],['#f59e0b','Med'],['#3b82f6','Low']].map(([c,l]) => (
-            <div key={l} style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#aaa' }}>
-              <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: c, boxShadow: '0 0 4px ' + c }} />
-              {l}
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* Country leaderboard */}
-      {sorted.length > 0 && (
-        <div style={{ marginTop: '15px', display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px' }}>
-          {sorted.map(([country, count], i) => (
-            <div key={country} style={{ background: '#0a0a0f', padding: '10px', borderRadius: '8px', border: '1px solid #1a1a2e', textAlign: 'center' }}>
-              <div style={{ fontSize: '1rem', fontWeight: '900', color: i === 0 ? '#ef4444' : i === 1 ? '#f59e0b' : '#3b82f6' }}>#{i+1}</div>
-              <div style={{ fontSize: '0.7rem', color: '#fff', fontWeight: 'bold', marginTop: '3px' }}>{country}</div>
-              <div style={{ fontSize: '0.65rem', color: '#555' }}>{count} visits</div>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Mini Leaderboard */}
+      <div style={{ marginTop: '12px', display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '5px' }}>
+        {sorted.map(([country, count], i) => (
+          <div key={country} style={{ background: '#0a0a0f', padding: '6px 12px', borderRadius: '6px', border: '1px solid #222', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: i === 0 ? '#ef4444' : '#888', fontWeight: 'bold', fontSize: '0.8rem' }}>#{i+1}</span>
+            <span style={{ fontSize: '0.7rem', color: '#fff' }}>{country}</span>
+            <span style={{ fontSize: '0.7rem', color: '#10b981', fontWeight: 'bold' }}>{count}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -534,142 +517,7 @@ export default function AdminDashboard() {
             <WorldVisitorMap visitorLogs={visitorLogs} />
 
 
-            {/* Live Viewer Geographic Map */}
-            <div style={{ background: '#111', padding: '30px', borderRadius: '15px', border: '1px solid #222', marginBottom: '30px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>🗺️ Live Viewer Map — State Hotspots</h3>
-                <div style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 'bold' }}>📍 REAL-TIME TRACKING</div>
-              </div>
 
-              {/* India State Bubble Map */}
-              <div style={{ position: 'relative', width: '100%', height: '420px', background: 'rgba(0,0,0,0.3)', borderRadius: '12px', overflow: 'hidden', border: '1px solid #1a1a2e' }}>
-                
-                {/* Grid background */}
-                <svg width="100%" height="100%" style={{ position: 'absolute', top: 0, left: 0, opacity: 0.08 }}>
-                  <defs>
-                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#3b82f6" strokeWidth="0.5"/>
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#grid)" />
-                </svg>
-
-                {/* India outline label */}
-                <div style={{ position: 'absolute', top: '15px', left: '15px', color: '#333', fontSize: '0.75rem', letterSpacing: '2px', textTransform: 'uppercase' }}>INDIA — LIVE COVERAGE MAP</div>
-
-                {/* State Hotspot Bubbles — positioned approximately on India map */}
-                {(() => {
-                  // State positions as % of container (left%, top%) — approximate India map coords
-                  const statePositions = {
-                    'Kerala':          { left: '35%', top: '82%' },
-                    'Tamil Nadu':      { left: '40%', top: '78%' },
-                    'Karnataka':       { left: '35%', top: '68%' },
-                    'Maharashtra':     { left: '32%', top: '55%' },
-                    'Gujarat':         { left: '22%', top: '48%' },
-                    'Rajasthan':       { left: '28%', top: '35%' },
-                    'Delhi':           { left: '35%', top: '28%' },
-                    'Uttar Pradesh':   { left: '43%', top: '32%' },
-                    'West Bengal':     { left: '58%', top: '42%' },
-                    'Telangana':       { left: '42%', top: '63%' },
-                    'Andhra Pradesh':  { left: '44%', top: '70%' },
-                    'Madhya Pradesh':  { left: '38%', top: '46%' },
-                    'Bihar':           { left: '52%', top: '34%' },
-                    'Assam':           { left: '68%', top: '28%' },
-                    'Punjab':          { left: '28%', top: '20%' },
-                    'Haryana':         { left: '32%', top: '25%' },
-                    'Odisha':          { left: '52%', top: '52%' },
-                  };
-
-                  // Count visitors per state from logs
-                  const stateCounts = visitorLogs.reduce((acc, log) => {
-                    if (log.region) {
-                      acc[log.region] = (acc[log.region] || 0) + 1;
-                    }
-                    return acc;
-                  }, {});
-
-                  // Fallback demo data if no real data yet
-                  const displayData = Object.keys(statePositions).map(state => ({
-                    state,
-                    count: stateCounts[state] || Math.floor(Math.random() * 80) + 5,
-                    pos: statePositions[state]
-                  }));
-
-                  const maxCount = Math.max(...displayData.map(d => d.count));
-
-                  return displayData.map(({ state, count, pos }) => {
-                    const size = Math.max(28, Math.min(70, (count / maxCount) * 70));
-                    const isHot = count > maxCount * 0.6;
-                    const isMedium = count > maxCount * 0.3;
-                    const color = isHot ? '#ef4444' : isMedium ? '#f59e0b' : '#3b82f6';
-
-                    return (
-                      <div
-                        key={state}
-                        title={`${state}: ${count} viewers`}
-                        style={{
-                          position: 'absolute',
-                          left: pos.left,
-                          top: pos.top,
-                          transform: 'translate(-50%, -50%)',
-                          width: `${size}px`,
-                          height: `${size}px`,
-                          borderRadius: '50%',
-                          background: `radial-gradient(circle, ${color}88 0%, ${color}22 70%)`,
-                          border: `2px solid ${color}`,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          transition: 'all 0.3s ease',
-                          animation: isHot ? 'pulse 2s infinite' : 'none',
-                          zIndex: isHot ? 10 : 5,
-                          boxShadow: isHot ? `0 0 20px ${color}66` : 'none'
-                        }}
-                      >
-                        <div style={{ fontSize: size > 45 ? '0.7rem' : '0.55rem', fontWeight: 'bold', color: '#fff', textAlign: 'center', lineHeight: 1.1, padding: '2px' }}>
-                          {size > 40 ? state.split(' ')[0] : ''}
-                        </div>
-                        <div style={{ fontSize: size > 45 ? '0.75rem' : '0.6rem', color, fontWeight: '900' }}>{count}</div>
-                      </div>
-                    );
-                  });
-                })()}
-
-                {/* Legend */}
-                <div style={{ position: 'absolute', bottom: '15px', right: '15px', display: 'flex', gap: '15px', fontSize: '0.7rem' }}>
-                  {[{ color: '#ef4444', label: 'High Traffic' }, { color: '#f59e0b', label: 'Medium' }, { color: '#3b82f6', label: 'Low' }].map(({ color, label }) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#888' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: color }} />
-                      {label}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Top 5 States Table */}
-              <div style={{ marginTop: '20px', display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
-                {(() => {
-                  const stateCounts = visitorLogs.reduce((acc, log) => {
-                    if (log.region) acc[log.region] = (acc[log.region] || 0) + 1;
-                    return acc;
-                  }, {});
-                  const fallback = ['Kerala', 'Tamil Nadu', 'Karnataka', 'Maharashtra', 'West Bengal'];
-                  const sorted = Object.keys(stateCounts).length > 0
-                    ? Object.entries(stateCounts).sort((a,b) => b[1]-a[1]).slice(0,5)
-                    : fallback.map((s, i) => [s, 80 - i * 12]);
-
-                  return sorted.map(([state, count], i) => (
-                    <div key={state} style={{ background: '#0a0a0f', padding: '12px', borderRadius: '8px', border: '1px solid #222', textAlign: 'center' }}>
-                      <div style={{ fontSize: '1.2rem', fontWeight: '900', color: i === 0 ? '#ef4444' : i === 1 ? '#f59e0b' : '#3b82f6' }}>#{i+1}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#fff', fontWeight: 'bold', marginTop: '4px' }}>{state}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#666' }}>{count} viewers</div>
-                    </div>
-                  ));
-                })()}
-              </div>
-            </div>
 
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
