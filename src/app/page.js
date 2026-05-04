@@ -374,6 +374,7 @@ export default function Home() {
                   onClick={() => setActiveAudio(channel.youtube_id)}
                 >
                   <iframe
+                    key={`${channel.youtube_id}-${activeAudio === channel.youtube_id}`}
                     src={`https://www.youtube.com/embed/${channel.youtube_id}?autoplay=1&mute=${activeAudio === channel.youtube_id ? 0 : 1}&controls=1&rel=0&modestbranding=1&enablejsapi=1`}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
@@ -392,7 +393,17 @@ export default function Home() {
                       >
                         Hide
                       </button>
-                      <button className="audio-btn">
+                      <button 
+                        className="audio-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (activeAudio === channel.youtube_id) {
+                            setActiveAudio(null);
+                          } else {
+                            setActiveAudio(channel.youtube_id);
+                          }
+                        }}
+                      >
                         {activeAudio === channel.youtube_id ? '🔊' : '🔇'}
                       </button>
                     </div>
