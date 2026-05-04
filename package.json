@@ -9,17 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.105.1",
-    "dotenv": "^17.4.2",
-    "emoji-picker-react": "^4.19.1",
-    "next": "16.2.4",
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5",
+    "emoji-picker-react": "^4.12.0",
+    "next": "15.0.3",
+    "react": "19.0.0-rc-66a302c332-20241107",
+    "react-dom": "19.0.0-rc-66a302c332-20241107"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "eslint": "^9",
-    "eslint-config-next": "16.2.4",
-    "tailwindcss": "^4"
+    "@tailwindcss/postcss": "^4.0.0",
+    "eslint": "^8",
+    "eslint-config-next": "15.0.3",
+    "tailwindcss": "^4.0.0"
   }
 }
