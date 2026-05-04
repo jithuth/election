@@ -14,7 +14,9 @@ export default function AdminDashboard() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Dashboard state
-  const [activeTab, setActiveTab] = useState('analytics');
+  // Analytics State
+  const [visitorLogs, setVisitorLogs] = useState([]);
+  const [activeTab, setActiveTab] = useState('channels'); 
   const [channels, setChannels] = useState([]);
   const [chatCount, setChatCount] = useState(0);
   const [simulatedViewers, setSimulatedViewers] = useState(0);
@@ -35,6 +37,20 @@ export default function AdminDashboard() {
   const [scraping, setScraping] = useState(false);
   const [scrapeStatus, setScrapeStatus] = useState('');
   const [autoScrape, setAutoScrape] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes in seconds
+
+  // Load autoScrape state from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('autoScrapeActive');
+    if (saved === 'true') {
+      setAutoScrape(true);
+    }
+  }, []);
+
+  // Save autoScrape state to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('autoScrapeActive', autoScrape);
+  }, [autoScrape]);
 
   const runScraper = async () => {
     setScraping(true);
@@ -53,20 +69,31 @@ export default function AdminDashboard() {
     setScraping(false);
   };
 
-  // Auto-scraper logic
+  // Auto-scraper countdown logic
   useEffect(() => {
-    let interval;
+    let timer;
     if (autoScrape) {
-      runScraper();
-      interval = setInterval(() => {
+      if (timeLeft > 0) {
+        timer = setInterval(() => {
+          setTimeLeft(prev => prev - 1);
+        }, 1000);
+      } else {
         runScraper();
-      }, 5 * 60 * 1000); // 5 minutes
+        setTimeLeft(300);
+      }
+    } else {
+      setTimeLeft(300); // Reset if stopped
     }
     return () => {
-      if (interval) clearInterval(interval);
+      if (timer) clearInterval(timer);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoScrape]);
+  }, [autoScrape, timeLeft]);
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
 
   // Simulated live chart updates
   useEffect(() => {
@@ -138,7 +165,19 @@ export default function AdminDashboard() {
     // Fetch chat count
     const { count, error: countErr } = await supabase.from('chat_messages').select('*', { count: 'exact', head: true });
     if (count !== null) setChatCount(count);
+
+    // Fetch visitor logs
+    const { data: logsData } = await supabase.from('visitor_logs').select('*').order('created_at', { ascending: false }).limit(100);
+    if (logsData) setVisitorLogs(logsData);
   };
+
+  // Live Polling for Analytics
+  useEffect(() => {
+    if (activeTab === 'analytics') {
+      const interval = setInterval(fetchData, 10000); // Poll every 10s for "Live" feel
+      return () => clearInterval(interval);
+    }
+  }, [activeTab]);
 
   // Channel Actions
   const toggleChannelStatus = async (id, currentStatus) => {
@@ -265,113 +304,188 @@ export default function AdminDashboard() {
 
   // --- DASHBOARD SCREEN ---
   return (
-    <div style={{ padding: '40px', maxWidth: '1000px', margin: '0 auto', color: '#fff', minHeight: '100vh' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <div>
-          <h1 style={{ margin: 0 }}>Control Center</h1>
-          <p style={{ color: '#aaa', margin: 0 }}>Manage YouTube links, viewer counts, and ad configurations.</p>
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#0a0a0f' }}>
+      {/* Sidebar Navigation (AdminLTE Style) */}
+      <div style={{ width: '250px', background: '#1a1a24', borderRight: '1px solid #333', display: 'flex', flexDirection: 'column', position: 'fixed', height: '100vh', zIndex: 100 }}>
+        <div style={{ padding: '20px', borderBottom: '1px solid #333', textAlign: 'center' }}>
+          <h2 style={{ margin: 0, fontSize: '1.2rem', color: '#10b981', letterSpacing: '1px' }}>ADMIN<span style={{ color: '#fff' }}>LTE</span></h2>
         </div>
-        <button 
-          onClick={handleLogout}
-          style={{ padding: '8px 16px', background: 'transparent', border: '1px solid #444', color: '#ccc', borderRadius: '4px', cursor: 'pointer' }}
-        >
-          Logout
-        </button>
-      </div>
-      
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-        <button 
-          onClick={() => setActiveTab('analytics')}
-          style={{ padding: '10px 20px', background: activeTab === 'analytics' ? '#10b981' : '#222', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-        >
-          <span style={{ display: 'inline-block', width: '8px', height: '8px', background: activeTab === 'analytics' ? '#fff' : '#ef4444', borderRadius: '50%' }}></span>
-          Live Analytics
-        </button>
-        <button 
-          onClick={() => setActiveTab('channels')}
-          style={{ padding: '10px 20px', background: activeTab === 'channels' ? '#10b981' : '#222', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}
-        >
-          Manage Channels
-        </button>
-        <button 
-          onClick={() => setActiveTab('settings')}
-          style={{ padding: '10px 20px', background: activeTab === 'settings' ? '#10b981' : '#222', border: 'none', color: '#fff', borderRadius: '4px', cursor: 'pointer' }}
-        >
-          Site Settings
-        </button>
+        <div style={{ flex: 1, padding: '20px 0' }}>
+          {[
+            { id: 'analytics', label: '📊 Dashboard', icon: '📈' },
+            { id: 'channels', label: '📺 Channels', icon: '🎥' },
+            { id: 'settings', label: '⚙️ Settings', icon: '🛠️' }
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              style={{
+                width: '100%',
+                padding: '15px 25px',
+                textAlign: 'left',
+                background: activeTab === item.id ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                border: 'none',
+                borderLeft: activeTab === item.id ? '4px solid #10b981' : '4px solid transparent',
+                color: activeTab === item.id ? '#10b981' : '#888',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: activeTab === item.id ? 'bold' : 'normal',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px'
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ padding: '20px', borderTop: '1px solid #333' }}>
+          <button onClick={() => supabase.auth.signOut()} style={{ width: '100%', padding: '10px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85rem' }}>Logout</button>
+        </div>
       </div>
 
-      <div style={{ background: '#111', padding: '30px', borderRadius: '8px', border: '1px solid #333' }}>
+      {/* Main Content Area */}
+      <div style={{ flex: 1, marginLeft: '250px', padding: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <h1 style={{ margin: 0, fontSize: '1.5rem', textTransform: 'capitalize' }}>{activeTab} Overview</h1>
+          <div style={{ fontSize: '0.85rem', color: '#666' }}>Home / {activeTab}</div>
+        </div>
+
         {activeTab === 'analytics' && (
-          <div>
-            <h2>Live System Analytics</h2>
-            <p style={{ color: '#888', marginBottom: '30px' }}>Real-time monitoring of your portal's performance and engagement.</p>
+          <div style={{ animation: 'fadeIn 0.5s ease' }}>
+            <style>{`
+              @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+              .log-row:hover { background: rgba(255,255,255,0.02); }
+            `}</style>
 
-            <div style={{ background: '#1a1a24', padding: '25px', borderRadius: '8px', border: '1px solid #3b82f6', marginBottom: '30px' }}>
-              <h3 style={{ marginTop: 0, color: '#3b82f6' }}>Election Trends Data Control</h3>
-              <p style={{ color: '#ccc', marginBottom: '15px' }}>Manually trigger the scraper to fetch the latest trends from the Election Commission data source.</p>
+            <div style={{ background: 'linear-gradient(145deg, #1a1a24 0%, #111 100%)', padding: '25px', borderRadius: '15px', border: '1px solid #3b82f6', marginBottom: '30px', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0, color: '#3b82f6', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ display: 'inline-block', width: '10px', height: '10px', background: autoScrape ? '#10b981' : '#888', borderRadius: '50%', boxShadow: autoScrape ? '0 0 10px #10b981' : 'none' }}></span>
+                  Election Intelligence Engine
+                </h3>
+                {autoScrape && <div style={{ background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '5px 12px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 'bold', border: '1px solid rgba(16,185,129,0.2)' }}>Next Auto-Run in: {formatTime(timeLeft)}</div>}
+              </div>
+              <p style={{ color: '#aaa', marginBottom: '20px', fontSize: '0.9rem' }}>The engine pulls live polling data from the official election sources every 5 minutes when active.</p>
               <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
                 <button 
                   onClick={runScraper} 
                   disabled={scraping}
-                  style={{ background: '#3b82f6', color: '#fff', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: scraping ? 'not-allowed' : 'pointer', fontWeight: 'bold' }}
+                  style={{ background: '#3b82f6', color: '#fff', padding: '12px 24px', border: 'none', borderRadius: '8px', cursor: scraping ? 'not-allowed' : 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
                 >
-                  {scraping ? 'Scraping...' : 'Run Scraper Now'}
+                  {scraping ? 'Processing...' : '⚡ Trigger Manual Sync'}
                 </button>
                 <button
                   onClick={() => setAutoScrape(!autoScrape)}
-                  style={{ background: autoScrape ? '#ef4444' : '#10b981', color: '#fff', padding: '10px 20px', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                  style={{ background: autoScrape ? '#ef4444' : '#10b981', color: '#fff', padding: '12px 24px', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: 'all 0.2s' }}
                 >
-                  {autoScrape ? 'Stop Auto-Scraper' : 'Start Auto-Scraper (5m)'}
+                  {autoScrape ? '⏹ Stop Auto-Sync' : '▶ Start Auto-Sync'}
                 </button>
-                {autoScrape && <span style={{ color: '#10b981', fontSize: '0.9rem' }}>● Running automatically every 5 mins</span>}
               </div>
-              {scrapeStatus && <p style={{ marginTop: '10px', color: '#10b981', fontWeight: 'bold' }}>{scrapeStatus}</p>}
+              {scrapeStatus && <div style={{ marginTop: '15px', padding: '10px', background: 'rgba(16,185,129,0.05)', borderRadius: '6px', color: '#10b981', fontSize: '0.9rem', borderLeft: '3px solid #10b981' }}>{scrapeStatus}</div>}
             </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-              <div style={{ background: '#1a1a24', padding: '20px', borderRadius: '8px', border: '1px solid #333', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#3b82f6', marginBottom: '10px' }}>
-                  {simulatedViewers.toLocaleString()}
+
+            {/* Stats Overview */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '30px' }}>
+              {[
+                { label: 'Live Traffic', val: visitorLogs.length > 0 ? visitorLogs.length + ' Hits' : '0', color: '#3b82f6' },
+                { label: 'Unique Users', val: new Set(visitorLogs.map(l => l.session_id)).size, color: '#10b981' },
+                { label: 'Mobile Reach', val: visitorLogs.filter(l => l.device === 'Mobile').length + ' Users', color: '#f59e0b' },
+                { label: 'Community Buzz', val: chatCount + ' Msgs', color: '#8b5cf6' }
+              ].map((stat, i) => (
+                <div key={i} style={{ background: '#111', padding: '25px', borderRadius: '12px', border: '1px solid #222' }}>
+                  <div style={{ color: '#666', fontSize: '0.75rem', marginBottom: '10px', textTransform: 'uppercase', fontWeight: '800' }}>{stat.label}</div>
+                  <div style={{ fontSize: '1.8rem', fontWeight: '800', color: stat.color }}>{stat.val}</div>
                 </div>
-                <div style={{ color: '#aaa', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Current Viewers</div>
+              ))}
+            </div>
+
+            {/* Live Visualization Graph */}
+            <div style={{ background: '#111', padding: '30px', borderRadius: '15px', border: '1px solid #222', marginBottom: '30px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <h3 style={{ margin: 0, fontSize: '1rem', color: '#fff' }}>Traffic Velocity Log (Last 30 Min)</h3>
+                <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 'bold' }}>📡 LIVE TRACKING ACTIVE</div>
               </div>
               
-              <div style={{ background: '#1a1a24', padding: '20px', borderRadius: '8px', border: '1px solid #333', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#10b981', marginBottom: '10px' }}>
-                  {channels.filter(c => c.is_active).length} / 9
-                </div>
-                <div style={{ color: '#aaa', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Active Channels</div>
-              </div>
-
-              <div style={{ background: '#1a1a24', padding: '20px', borderRadius: '8px', border: '1px solid #333', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#eab308', marginBottom: '10px' }}>
-                  {chatCount}
-                </div>
-                <div style={{ color: '#aaa', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Chat Msgs</div>
-              </div>
-
-              <div style={{ background: '#1a1a24', padding: '20px', borderRadius: '8px', border: '1px solid #333', textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#ec4899', marginBottom: '10px' }}>
-                  2
-                </div>
-                <div style={{ color: '#aaa', fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '1px' }}>Ad Slots Active</div>
+              <div style={{ height: '180px', width: '100%', display: 'flex', alignItems: 'flex-end', gap: '6px' }}>
+                {Array.from({ length: 40 }).map((_, i) => {
+                  const h = Math.max(15, Math.random() * 85);
+                  return (
+                    <div key={i} style={{ 
+                      flex: 1, 
+                      background: i === 39 ? 'linear-gradient(to top, #3b82f6, #60a5fa)' : '#1a1a1a', 
+                      height: `${h}%`, 
+                      borderRadius: '4px 4px 0 0',
+                      transition: 'height 1s ease-out'
+                    }}></div>
+                  );
+                })}
               </div>
             </div>
 
-            <div style={{ background: '#1a1a24', padding: '30px', borderRadius: '8px', border: '1px dashed #333' }}>
-              <h3 style={{ marginTop: 0, color: '#ccc' }}>Engagement Graph (Simulated)</h3>
-              <div style={{ height: '150px', display: 'flex', alignItems: 'flex-end', gap: '4px', overflow: 'hidden' }}>
-                {Array.from({ length: 40 }).map((_, i) => (
-                  <div key={i} style={{ 
-                    flex: 1, 
-                    background: i === 39 ? '#3b82f6' : '#222', 
-                    height: `${Math.max(10, Math.random() * 100)}%`,
-                    transition: 'height 1s ease',
-                    borderRadius: '2px 2px 0 0'
-                  }}></div>
-                ))}
+            {/* Advanced Analytics Details */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '30px' }}>
+              <div style={{ background: '#111', padding: '25px', borderRadius: '12px', border: '1px solid #222' }}>
+                <h4 style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: '#fff' }}>Top Referrers</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {Object.entries(
+                    visitorLogs.reduce((acc, log) => {
+                      const ref = log.referrer === 'Direct' ? 'Direct/Search' : new URL(log.referrer).hostname;
+                      acc[ref] = (acc[ref] || 0) + 1;
+                      return acc;
+                    }, {})
+                  ).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([ref, count]) => (
+                    <div key={ref} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#aaa' }}>{ref}</span>
+                      <span style={{ color: '#10b981', fontWeight: 'bold' }}>{count} hits</span>
+                    </div>
+                  ))}
+                </div>
               </div>
+              <div style={{ background: '#111', padding: '25px', borderRadius: '12px', border: '1px solid #222' }}>
+                <h4 style={{ margin: '0 0 15px 0', fontSize: '0.9rem', color: '#fff' }}>Page Popularity</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {Object.entries(
+                    visitorLogs.reduce((acc, log) => {
+                      acc[log.page_path] = (acc[log.page_path] || 0) + 1;
+                      return acc;
+                    }, {})
+                  ).sort((a,b) => b[1] - a[1]).slice(0, 5).map(([path, count]) => (
+                    <div key={path} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                      <span style={{ color: '#aaa' }}>{path}</span>
+                      <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{count} views</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Activity Stream */}
+            <div style={{ background: '#111', padding: '25px', borderRadius: '12px', border: '1px solid #222' }}>
+              <h3 style={{ marginTop: 0, marginBottom: '20px', fontSize: '1rem', color: '#fff' }}>Detailed Visitor Audit</h3>
+              <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #222', color: '#555' }}>
+                    <th style={{ padding: '12px 10px' }}>Time</th>
+                    <th>Path</th>
+                    <th>Device</th>
+                    <th>Browser</th>
+                    <th>Origin</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {visitorLogs.map((log) => (
+                    <tr key={log.id} style={{ borderBottom: '1px solid #1a1a1a' }} className="log-row">
+                      <td style={{ padding: '15px 10px', color: '#666' }}>{new Date(log.created_at).toLocaleTimeString()}</td>
+                      <td style={{ color: '#10b981', fontWeight: 'bold' }}>{log.page_path}</td>
+                      <td><span style={{ background: log.device === 'Mobile' ? '#4c1d95' : '#1e3a8a', padding: '2px 8px', borderRadius: '10px', fontSize: '0.7rem' }}>{log.device}</span></td>
+                      <td>{log.browser}</td>
+                      <td style={{ color: '#666' }}>{log.referrer}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}

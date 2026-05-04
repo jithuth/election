@@ -1,4 +1,5 @@
 import './globals.css';
+import Analytics from '../components/Analytics';
 
 export const metadata = {
   title: 'Live Election News 24/7 | Multi-State Command Center',
@@ -24,8 +25,28 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+        
+        {/* Structured Data for News Portal SEO */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "NewsMediaOrganization",
+              "name": "Live Election News 24/7",
+              "url": "https://news-portal.com",
+              "logo": "https://news-portal.com/logo.png",
+              "sameAs": [
+                "https://facebook.com/newportal",
+                "https://twitter.com/newsportal"
+              ],
+              "description": "Premium multi-state live election monitoring command center."
+            })
+          }}
+        />
       </head>
       <body>
+        <Analytics />
         {children}
       </body>
     </html>

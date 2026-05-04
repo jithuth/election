@@ -50,9 +50,19 @@ export default function Home() {
   const [channels, setChannels] = useState(DEFAULT_CHANNELS);
   const [activeAudio, setActiveAudio] = useState(null);
   const [activeState, setActiveState] = useState('All States');
+  
+  // Dynamic Page Title for browser tab
+  useEffect(() => {
+    document.title = activeState === 'All States' 
+      ? 'Live Election News 24/7 | Multi-State Command Center'
+      : `Live ${activeState} Election Results | News Portal`;
+  }, [activeState]);
+
   const [viewers, setViewers] = useState(1204);
   const [updatingViewers, setUpdatingViewers] = useState(false);
   const [electionData, setElectionData] = useState(null);
+  const [showVideos, setShowVideos] = useState(true);
+  const [hiddenChannels, setHiddenChannels] = useState(new Set());
   const [chatMessages, setChatMessages] = useState([
     { id: 1, username: 'Admin', text: 'Welcome to the Live News Portal!' }
   ]);
@@ -214,6 +224,8 @@ export default function Home() {
     }
   };
 
+  const filteredChannels = channels.filter(channel => activeState === 'All States' || channel.state === activeState);
+
   return (
     <>
       <header>
@@ -236,6 +248,25 @@ export default function Home() {
                 <script src="https://www.highperformanceformat.com/97c438075f81f5cb57cdb3bb862165d0/invoke.js"></script>
               `} 
             />
+            <button 
+              onClick={() => setShowVideos(!showVideos)}
+              style={{ 
+                background: showVideos ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', 
+                color: showVideos ? '#ef4444' : '#10b981', 
+                border: '1px solid',
+                borderColor: showVideos ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)',
+                padding: '6px 12px', 
+                borderRadius: '6px', 
+                cursor: 'pointer', 
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              {showVideos ? '🚫 Hide Videos' : '📺 Show Videos'}
+            </button>
             <button 
               onClick={toggleFullScreen}
               style={{ 
@@ -293,40 +324,71 @@ export default function Home() {
 
       <main>
         {/* Video Grid Area */}
-        <div className="grid-container">
-          {channels
-            .filter(channel => activeState === 'All States' || channel.state === activeState)
-            .map((channel, index) => {
-            const isAudioActive = activeAudio === index;
-            // using mute=0 when active, mute=1 when inactive
-            const src = `https://www.youtube.com/embed/${channel.youtube_id}?enablejsapi=1&autoplay=1&mute=${isAudioActive ? '0' : '1'}&playsinline=1&rel=0&modestbranding=1`;
-            
-            return (
-              <div 
-                key={channel.id} 
-                className={`tile ${isAudioActive ? 'active-audio' : ''}`}
-              >
-                <iframe 
-                  src={src} 
-                  title={channel.name}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                  allowFullScreen
-                ></iframe>
-                
-                <div className="tile-overlay">
-                  <span className="channel-name">{channel.name}</span>
-                  <button 
-                    className="audio-btn" 
-                    onClick={() => setActiveAudio(isAudioActive ? null : index)}
-                    title={isAudioActive ? 'Mute' : 'Unmute'}
-                  >
-                    {isAudioActive ? '🔊' : '🔇'}
-                  </button>
+        {showVideos ? (
+          <div className="grid-container">
+            {filteredChannels.slice(0, 9).map((channel) => {
+              const isHidden = hiddenChannels.has(channel.id);
+              
+              if (isHidden) {
+                return (
+                  <div key={channel.id} className="tile" style={{ background: '#050505', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#444', border: '1px dashed #222' }}>
+                    <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🚫</div>
+                    <div style={{ fontSize: '0.7rem', fontWeight: 'bold' }}>{channel.name} Hidden</div>
+                    <button 
+                      onClick={() => {
+                        const newHidden = new Set(hiddenChannels);
+                        newHidden.delete(channel.id);
+                        setHiddenChannels(newHidden);
+                      }}
+                      style={{ marginTop: '10px', background: '#3b82f6', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}
+                    >
+                      Show Video
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div 
+                  key={channel.id} 
+                  className={`tile ${activeAudio === channel.youtube_id ? 'active-audio' : ''}`}
+                  onClick={() => setActiveAudio(channel.youtube_id)}
+                >
+                  <iframe
+                    src={`https://www.youtube.com/embed/${channel.youtube_id}?autoplay=1&mute=${activeAudio === channel.youtube_id ? 0 : 1}&controls=1&rel=0&modestbranding=1&enablejsapi=1`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                  <div className="tile-overlay">
+                    <div className="channel-name">{channel.name}</div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newHidden = new Set(hiddenChannels);
+                          newHidden.add(channel.id);
+                          setHiddenChannels(newHidden);
+                        }}
+                        style={{ pointerEvents: 'auto', background: 'rgba(0,0,0,0.5)', border: 'none', color: '#fff', padding: '4px 8px', borderRadius: '4px', fontSize: '0.7rem', cursor: 'pointer' }}
+                      >
+                        Hide
+                      </button>
+                      <button className="audio-btn">
+                        {activeAudio === channel.youtube_id ? '🔊' : '🔇'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#050505', color: '#444', border: '1px dashed #222', margin: '10px', borderRadius: '12px' }}>
+             <div style={{ fontSize: '3rem', marginBottom: '10px' }}>📺</div>
+             <div style={{ fontWeight: 'bold' }}>Video Streams Hidden</div>
+             <button onClick={() => setShowVideos(true)} style={{ marginTop: '15px', padding: '10px 20px', background: '#10b981', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Resume Watching</button>
+          </div>
+        )}
 
         {/* Sidebar & Chat Area */}
         <aside className="sidebar">

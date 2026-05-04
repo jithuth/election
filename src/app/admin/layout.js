@@ -15,7 +15,7 @@ export const metadata = {
 
 export default function AdminLayout({ children }) {
   return (
-    <section style={{ height: '100vh', background: '#000' }}>
+    <section style={{ minHeight: '100vh', background: '#0a0a0f', color: '#fff' }}>
       {children}
     </section>
   );
