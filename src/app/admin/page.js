@@ -431,7 +431,14 @@ export default function AdminDashboard() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {Object.entries(
                     visitorLogs.reduce((acc, log) => {
-                      const ref = log.referrer === 'Direct' ? 'Direct/Search' : new URL(log.referrer).hostname;
+                      let ref = 'Direct/Search';
+                      if (log.referrer && log.referrer !== 'Direct') {
+                        try {
+                          ref = new URL(log.referrer).hostname;
+                        } catch (e) {
+                          ref = log.referrer.substring(0, 20) + '...';
+                        }
+                      }
                       acc[ref] = (acc[ref] || 0) + 1;
                       return acc;
                     }, {})
