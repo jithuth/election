@@ -41,7 +41,7 @@ function WorldVisitorMap({ visitorLogs }) {
   const sorted = Object.entries(src).sort((a, b) => b[1] - a[1]).slice(0, 6);
 
   return (
-    <div style={{ background: '#111', padding: '30px', borderRadius: '15px', border: '1px solid #222', marginBottom: '30px' }}>
+    <div style={{ background: '#111', padding: '20px', borderRadius: '15px', border: '1px solid #222', marginBottom: '30px', overflow: 'hidden' }}>
       <style>{`
         @keyframes ripple { 0%,100% { transform: scale(1); opacity:0.5; } 50% { transform: scale(1.8); opacity:0; } }
         .dot-hot::before { content:''; position:absolute; inset:-8px; border-radius:50%; border:2px solid currentColor; animation: ripple 2s infinite; }
@@ -56,12 +56,12 @@ function WorldVisitorMap({ visitorLogs }) {
       </div>
 
       {/* Map canvas */}
-      <div style={{ position: 'relative', width: '100%', height: '400px', background: '#050a12', borderRadius: '10px', overflow: 'hidden', border: '1px solid #1a1a2e' }}>
+      <div style={{ position: 'relative', width: '100%', height: '340px', background: '#050a12', borderRadius: '10px', overflow: 'hidden', border: '1px solid #1a1a2e' }}>
         {/* World map image base */}
         <img
           src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1280px-World_map_-_low_resolution.svg.png"
           alt=""
-          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', opacity: 0.15, filter: 'grayscale(1) invert(1) brightness(0.3)' }}
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', objectPosition: 'center', opacity: 0.18, filter: 'grayscale(1) invert(1) brightness(0.25)' }}
         />
         {/* Grid */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(59,130,246,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.05) 1px,transparent 1px)', backgroundSize: '50px 50px' }} />
