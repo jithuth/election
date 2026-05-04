@@ -22,4 +22,7 @@ app.prepare().then(() => {
     if (err) throw err
     console.log(`> Ready on http://${hostname}:${port}`)
   })
+}).catch((err) => {
+  console.error('FAILED TO PREPARE NEXT APP', err)
+  process.exit(1)
 })
