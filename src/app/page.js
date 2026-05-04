@@ -249,6 +249,25 @@ export default function Home() {
               `} 
             />
             <button 
+              onClick={() => setActiveAudio(null)}
+              style={{ 
+                background: 'rgba(255,255,255,0.05)', 
+                color: '#aaa', 
+                border: '1px solid rgba(255,255,255,0.1)',
+                padding: '6px 12px', 
+                borderRadius: '6px', 
+                cursor: 'pointer', 
+                fontSize: '0.8rem',
+                fontWeight: 'bold',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+              title="Mute All"
+            >
+              🔇 Mute All
+            </button>
+            <button 
               onClick={() => setShowVideos(!showVideos)}
               style={{ 
                 background: showVideos ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', 
